@@ -1,6 +1,8 @@
 import React from 'react';
 import BookingForm from '../components/forms/BookingForm';
 
+// This component represents the first page of the booking flow, where the user
+// enters their booking details. It's a self-contained page.
 const Booking: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 py-12">

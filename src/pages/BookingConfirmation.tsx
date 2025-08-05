@@ -7,19 +7,8 @@ import { vehicles } from '../data/mockData';
 import Button from '../components/ui/Button';
 import Loading from '../components/common/Loading';
 
-// A mock function to simulate distance calculation based on South Indian locations
-const getDistanceBetweenLocations = (pickup: string, drop: string): number => {
-  // Mock distances for South Indian cities
-  const distances = {
-    'Chennai-Bangalore': 350,
-    'Chennai-Hyderabad': 625,
-    'Bangalore-Hyderabad': 575,
-  };
-  const key = `${pickup}-${drop}`;
-  const reverseKey = `${drop}-${pickup}`;
-  return distances[key] || distances[reverseKey] || 300; // Default mock distance
-};
-
+// This component is the separate page for confirming the booking.
+// It displays a summary and a button to finalize the reservation.
 const BookingConfirmation: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -27,96 +16,54 @@ const BookingConfirmation: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const selectedVehicle = vehicles.find(v => v.id === bookingData.vehicleId);
+  const selectedVehicle = vehicles.find(v => v.id === bookingData?.vehicleId);
 
   const handleConfirmBooking = async () => {
     if (!user) {
+      console.log('User not logged in, redirecting to login.');
       navigate('/login');
       return;
     }
-
+    console.log('User is logged in, attempting to submit booking.');
     setIsSubmitting(true);
-    const success = await submitBooking();
-    
-    if (success) {
-      setIsConfirmed(true);
-      setTimeout(() => {
-        navigate('/dashboard');
-      }, 3000);
+    try {
+      const success = await submitBooking();
+      console.log(`Booking submission status: ${success}`);
+      if (success) {
+        setIsConfirmed(true);
+        // Clear the booking data from context after successful submission
+        clearBookingData();
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error submitting booking:', error);
+    } finally {
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
-
-  // Function to calculate the total price based on booking data
-  const calculateTotalPrice = () => {
-    if (!bookingData || !selectedVehicle) {
-      return { baseFare: 0, distanceCost: 0, weightCost: 0, goodsTypeCost: 0, subtotal: 0 };
-    }
-
-    const baseFare = selectedVehicle.basePrice + 500 || 1500; // Increased base fare
-    const distance = getDistanceBetweenLocations(bookingData.pickupLocation, bookingData.dropLocation);
-    const weight = parseFloat(bookingData.weight) || 0;
-
-    // Define pricing rates based on vehicle type for a more realistic calculation
-    const costPerKm = selectedVehicle.type === 'two-wheeler' ? 7 : 
-                    selectedVehicle.type === 'three-wheeler' ? 15 : 
-                    20; // Increased cost per km
-    const costPerKg = 8; // Increased cost per kg
-
-    // Cost based on goods type
-    let goodsTypeCost = 0;
-    switch(bookingData.goodsType) {
-      case 'Electronics':
-        goodsTypeCost = 250;
-        break;
-      case 'Furniture':
-        goodsTypeCost = 150;
-        break;
-      case 'Perishables':
-        goodsTypeCost = 300;
-        break;
-      default:
-        goodsTypeCost = 100;
-    }
-
-    // Calculate total price components
-    const distanceCost = distance * costPerKm;
-    const weightCost = weight * costPerKg;
-    const subtotal = baseFare + distanceCost + weightCost + goodsTypeCost;
-
-    return { baseFare, distanceCost, weightCost, goodsTypeCost, subtotal };
-  };
-
-  const { baseFare, distanceCost, weightCost, goodsTypeCost, subtotal } = calculateTotalPrice();
-  const gstAmount = Math.round(subtotal * 0.18);
-  const totalFinalAmount = Math.round(subtotal + gstAmount);
 
   if (isConfirmed) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-lg p-8 max-w-md w-full mx-4 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-8 w-8 text-green-600" />
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Booking Confirmed!</h2>
-          <p className="text-gray-600 mb-6">
-            Your booking has been confirmed. You will receive a confirmation email shortly.
-          </p>
-          <div className="text-sm text-gray-500">
-            Redirecting to dashboard...
-          </div>
+          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Booking Confirmed!</h2>
+          <p className="text-gray-600 mb-4">You will be redirected to your dashboard shortly.</p>
+          <Loading />
         </div>
       </div>
     );
   }
 
-  if (!bookingData.pickupLocation || !selectedVehicle) {
+  if (!bookingData || !selectedVehicle) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Booking Data Found</h2>
-          <p className="text-gray-600 mb-6">Please start a new booking.</p>
-          <Button onClick={() => navigate('/booking')}>
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">No Booking Data Found</h1>
+          <p className="text-gray-600">Please start a new booking.</p>
+          <Button onClick={() => navigate('/booking')} className="mt-4">
             Start New Booking
           </Button>
         </div>
@@ -126,128 +73,70 @@ const BookingConfirmation: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">Confirm Your Booking</h1>
-          <p className="text-lg text-gray-600">
-            Review your booking details and confirm your transportation
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Booking Details */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Route Information */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Route Information</h2>
-              <div className="space-y-4">
-                <div className="flex items-start space-x-3">
-                  <div className="w-3 h-3 bg-green-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Pickup Location</p>
-                    <p className="text-gray-600">{bookingData.pickupLocation}</p>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-3">
-                  <div className="w-3 h-3 bg-red-500 rounded-full mt-2"></div>
-                  <div>
-                    <p className="font-medium text-gray-900">Drop Location</p>
-                    <p className="text-gray-600">{bookingData.dropLocation}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Vehicle Information */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Selected Vehicle</h2>
-              <div className="flex items-center space-x-4">
-                <img
-                  src={selectedVehicle.image}
-                  alt={selectedVehicle.name}
-                  className="w-20 h-20 object-cover rounded-lg"
-                />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">{selectedVehicle.name}</h3>
-                  <p className="text-gray-600 text-sm">{selectedVehicle.description}</p>
-                  <p className="text-sm text-gray-500 mt-1">{selectedVehicle.capacity}</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Shipment Details */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Shipment Details</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center space-x-3">
-                  <Package className="h-5 w-5 text-blue-600" />
-                  <div>
-                    <p className="font-medium text-gray-900">Goods Type</p>
-                    <p className="text-gray-600">{bookingData.goodsType}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="h-5 w-5 text-purple-600 font-bold">⚖</div>
-                  <div>
-                    <p className="font-medium text-gray-900">Weight</p>
-                    <p className="text-gray-600">{bookingData.weight}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-5 w-5 text-green-600" />
-                  <div>
-                    <p className="font-medium text-gray-900">Pickup Date</p>
-                    <p className="text-gray-600">{bookingData.scheduledDate}</p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Clock className="h-5 w-5 text-orange-600" />
-                  <div>
-                    <p className="font-medium text-gray-900">Time Slot</p>
-                    <p className="text-gray-600 capitalize">{bookingData.timeSlot}</p>
-                  </div>
-                </div>
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-red-600 p-6">
+            <div className="flex items-center space-x-4 text-white">
+              <CheckCircle className="h-8 w-8" />
+              <div>
+                <h1 className="text-2xl font-bold">Confirm Your Booking</h1>
+                <p className="text-sm font-light">Please review the details before confirming.</p>
               </div>
             </div>
           </div>
+          <div className="p-6">
+            <div className="border-b pb-4 mb-4">
+              <div className="flex items-center space-x-2 text-gray-700">
+                <Truck className="h-5 w-5 text-gray-500" />
+                <span className="font-medium text-lg">Vehicle Details</span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600 space-y-1">
+                <p><strong>Vehicle:</strong> {selectedVehicle.name}</p>
+                <p><strong>Capacity:</strong> {selectedVehicle.capacity}</p>
+                <p><strong>Price:</strong> ₹{selectedVehicle.pricePerKm} / km</p>
+              </div>
+            </div>
+            
+            <div className="border-b pb-4 mb-4">
+              <div className="flex items-center space-x-2 text-gray-700">
+                <MapPin className="h-5 w-5 text-gray-500" />
+                <span className="font-medium text-lg">Route Details</span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600 space-y-1">
+                <p><strong>Pickup Location:</strong> {bookingData.pickupLocation}</p>
+                <p><strong>Drop-off Location:</strong> {bookingData.dropoffLocation}</p>
+                <p><strong>Distance:</strong> {bookingData.distance} km</p>
+              </div>
+            </div>
 
-          {/* Booking Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Booking Summary</h2>
-              
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Vehicle Base Fare</span>
-                  <span className="font-medium">₹{baseFare}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Distance Cost ({getDistanceBetweenLocations(bookingData.pickupLocation, bookingData.dropLocation)} km)</span>
-                  <span className="font-medium">₹{distanceCost}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Weight Cost ({bookingData.weight} kg)</span>
-                  <span className="font-medium">₹{weightCost}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Goods Type Cost ({bookingData.goodsType})</span>
-                  <span className="font-medium">₹{goodsTypeCost}</span>
-                </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600 font-semibold">Subtotal</span>
-                    <span className="text-lg font-semibold">₹{subtotal}</span>
-                  </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">GST (18%)</span>
-                  <span className="font-medium">₹{gstAmount}</span>
-                </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between">
-                    <span className="text-lg font-semibold text-gray-900">Total Amount</span>
-                    <span className="text-2xl font-bold text-red-600">
-                      ₹{totalFinalAmount}
+            <div className="border-b pb-4 mb-4">
+              <div className="flex items-center space-x-2 text-gray-700">
+                <Calendar className="h-5 w-5 text-gray-500" />
+                <span className="font-medium text-lg">Date & Time</span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600 space-y-1">
+                <p><strong>Date:</strong> {bookingData.date}</p>
+                <p><strong>Time:</strong> {bookingData.time}</p>
+              </div>
+            </div>
+
+            <div className="border-b pb-4 mb-4">
+              <div className="flex items-center space-x-2 text-gray-700">
+                <Package className="h-5 w-5 text-gray-500" />
+                <span className="font-medium text-lg">Goods Details</span>
+              </div>
+              <div className="mt-2 text-sm text-gray-600 space-y-1">
+                <p><strong>Goods Type:</strong> {bookingData.goodsType}</p>
+                <p><strong>Weight:</strong> {bookingData.weight} kg</p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex justify-between items-center text-red-800">
+                    <span className="font-medium">Total Price (incl. GST)</span>
+                    <span className="text-xl font-bold text-red-600">
+                      ₹{Math.round((bookingData.totalPrice || 0) * 1.18)}
                     </span>
                   </div>
                 </div>
@@ -287,7 +176,7 @@ const BookingConfirmation: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    
   );
 };
 
