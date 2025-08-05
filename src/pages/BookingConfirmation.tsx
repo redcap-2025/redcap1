@@ -7,6 +7,19 @@ import { vehicles } from '../data/mockData';
 import Button from '../components/ui/Button';
 import Loading from '../components/common/Loading';
 
+// A mock function to simulate distance calculation based on South Indian locations
+const getDistanceBetweenLocations = (pickup: string, drop: string): number => {
+  // Mock distances for South Indian cities
+  const distances = {
+    'Chennai-Bangalore': 350,
+    'Chennai-Hyderabad': 625,
+    'Bangalore-Hyderabad': 575,
+  };
+  const key = `${pickup}-${drop}`;
+  const reverseKey = `${drop}-${pickup}`;
+  return distances[key] || distances[reverseKey] || 300; // Default mock distance
+};
+
 const BookingConfirmation: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmed, setIsConfirmed] = useState(false);
@@ -33,6 +46,50 @@ const BookingConfirmation: React.FC = () => {
     }
     setIsSubmitting(false);
   };
+
+  // Function to calculate the total price based on booking data
+  const calculateTotalPrice = () => {
+    if (!bookingData || !selectedVehicle) {
+      return { baseFare: 0, distanceCost: 0, weightCost: 0, goodsTypeCost: 0, subtotal: 0 };
+    }
+
+    const baseFare = selectedVehicle.basePrice + 500 || 1500; // Increased base fare
+    const distance = getDistanceBetweenLocations(bookingData.pickupLocation, bookingData.dropLocation);
+    const weight = parseFloat(bookingData.weight) || 0;
+
+    // Define pricing rates based on vehicle type for a more realistic calculation
+    const costPerKm = selectedVehicle.type === 'two-wheeler' ? 7 : 
+                    selectedVehicle.type === 'three-wheeler' ? 15 : 
+                    20; // Increased cost per km
+    const costPerKg = 8; // Increased cost per kg
+
+    // Cost based on goods type
+    let goodsTypeCost = 0;
+    switch(bookingData.goodsType) {
+      case 'Electronics':
+        goodsTypeCost = 250;
+        break;
+      case 'Furniture':
+        goodsTypeCost = 150;
+        break;
+      case 'Perishables':
+        goodsTypeCost = 300;
+        break;
+      default:
+        goodsTypeCost = 100;
+    }
+
+    // Calculate total price components
+    const distanceCost = distance * costPerKm;
+    const weightCost = weight * costPerKg;
+    const subtotal = baseFare + distanceCost + weightCost + goodsTypeCost;
+
+    return { baseFare, distanceCost, weightCost, goodsTypeCost, subtotal };
+  };
+
+  const { baseFare, distanceCost, weightCost, goodsTypeCost, subtotal } = calculateTotalPrice();
+  const gstAmount = Math.round(subtotal * 0.18);
+  const totalFinalAmount = Math.round(subtotal + gstAmount);
 
   if (isConfirmed) {
     return (
@@ -161,18 +218,36 @@ const BookingConfirmation: React.FC = () => {
               
               <div className="space-y-3 mb-6">
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Base Fare</span>
-                  <span className="font-medium">₹{bookingData.totalPrice}</span>
+                  <span className="text-gray-600">Vehicle Base Fare</span>
+                  <span className="font-medium">₹{baseFare}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Distance Cost ({getDistanceBetweenLocations(bookingData.pickupLocation, bookingData.dropLocation)} km)</span>
+                  <span className="font-medium">₹{distanceCost}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Weight Cost ({bookingData.weight} kg)</span>
+                  <span className="font-medium">₹{weightCost}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Goods Type Cost ({bookingData.goodsType})</span>
+                  <span className="font-medium">₹{goodsTypeCost}</span>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600 font-semibold">Subtotal</span>
+                    <span className="text-lg font-semibold">₹{subtotal}</span>
+                  </div>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">GST (18%)</span>
-                  <span className="font-medium">₹{Math.round((bookingData.totalPrice || 0) * 0.18)}</span>
+                  <span className="font-medium">₹{gstAmount}</span>
                 </div>
                 <div className="border-t pt-3">
                   <div className="flex justify-between">
                     <span className="text-lg font-semibold text-gray-900">Total Amount</span>
                     <span className="text-2xl font-bold text-red-600">
-                      ₹{Math.round((bookingData.totalPrice || 0) * 1.18)}
+                      ₹{totalFinalAmount}
                     </span>
                   </div>
                 </div>

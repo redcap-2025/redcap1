@@ -7,8 +7,8 @@ export const vehicles: Vehicle[] = [
     type: 'three-wheeler',
     capacity: 'Up to 200kg',
     image: 'https://images.pexels.com/photos/2734499/pexels-photo-2734499.jpeg?auto=compress&cs=tinysrgb&w=800',
-    basePrice: 200,
-    description: 'Perfect for small loads and documents',
+    basePrice: 500, // Increased price
+    description: 'Perfect for small loads and quick deliveries within the city.',
     suitableFor: ['Small packages', 'Documents', 'Light groceries'],
     specifications: {
       maxWeight: '200kg',
@@ -18,12 +18,12 @@ export const vehicles: Vehicle[] = [
   },
   {
     id: '2',
-    name: 'Tata Ace',
-    type: 'mini-truck',
+    name: '4-Wheeler',
+    type: 'four-wheeler',
     capacity: 'Up to 750kg',
     image: 'https://images.pexels.com/photos/2449452/pexels-photo-2449452.jpeg?auto=compress&cs=tinysrgb&w=800',
-    basePrice: 450,
-    description: 'Ideal for household shifting and furniture',
+    basePrice: 1000, // Increased price
+    description: 'Ideal for household shifting and furniture transportation.',
     suitableFor: ['Furniture', 'Appliances', 'Medium cargo'],
     specifications: {
       maxWeight: '750kg',
@@ -33,32 +33,32 @@ export const vehicles: Vehicle[] = [
   },
   {
     id: '3',
-    name: 'Pickup Truck',
-    type: 'large-truck',
-    capacity: 'Up to 1500kg',
+    name: '6-Wheeler',
+    type: 'six-wheeler',
+    capacity: 'Up to 2500kg',
     image: 'https://images.pexels.com/photos/2449454/pexels-photo-2449454.jpeg?auto=compress&cs=tinysrgb&w=800',
-    basePrice: 800,
-    description: 'Best for heavy loads and long distance',
+    basePrice: 2500, // Increased price
+    description: 'Best for large loads and medium distance haulage.',
     suitableFor: ['Heavy machinery', 'Bulk items', 'Construction materials'],
     specifications: {
-      maxWeight: '1500kg',
-      dimensions: '8ft x 6ft x 5ft',
+      maxWeight: '2500kg',
+      dimensions: '12ft x 6ft x 5ft',
       fuelType: 'Diesel'
     }
   },
   {
     id: '4',
-    name: 'Two Wheeler',
-    type: 'two-wheeler',
-    capacity: 'Up to 30kg',
-    image: 'https://images.pexels.com/photos/2422479/pexels-photo-2422479.jpeg?auto=compress&cs=tinysrgb&w=800',
-    basePrice: 100,
-    description: 'Quick delivery for small packages',
-    suitableFor: ['Documents', 'Small packages', 'Food delivery'],
+    name: 'Heavy Load Vehicle',
+    type: 'heavy-load',
+    capacity: 'Up to 5000kg',
+    image: 'https://images.pexels.com/photos/221376/pexels-photo-221376.jpeg?auto=compress&cs=tinysrgb&w=800',
+    basePrice: 5000, // Increased price for heavy loads
+    description: 'For industrial-scale transportation and long-distance cargo.',
+    suitableFor: ['Heavy machinery', 'Industrial goods', 'Large-scale events'],
     specifications: {
-      maxWeight: '30kg',
-      dimensions: '2ft x 1.5ft x 1.5ft',
-      fuelType: 'Petrol'
+      maxWeight: '5000kg',
+      dimensions: '16ft x 8ft x 7ft',
+      fuelType: 'Diesel'
     }
   }
 ];
