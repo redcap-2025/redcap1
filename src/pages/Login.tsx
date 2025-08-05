@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Phone, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import Button from '../components/ui/Button';
 
 interface LoginFormData {
-  email: string;
-  password: string;
-  rememberMe: boolean;
+  phone: string;
+  otp: string;
 }
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState('');
-  const { login, isLoading } = useAuth();
+  const [otpSent, setOtpSent] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -22,14 +23,56 @@ const Login: React.FC = () => {
   
   const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>();
 
-  const onSubmit = async (data: LoginFormData) => {
+  const handleSendOtp = async (data: LoginFormData) => {
+    setIsLoading(true);
     setLoginError('');
-    const success = await login(data.email, data.password);
+    // Mock API call to send OTP
+    console.log(`Sending OTP to phone number: ${data.phone}`);
+    try {
+      // Simulate network request
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // In a real app, you would make a fetch call here
+      // const response = await fetch('/api/send-otp', { ... });
+      // const result = await response.json();
+      
+      // Simulate successful OTP sent
+      setOtpSent(true);
+      setLoginError('');
+    } catch (error) {
+      setLoginError('Failed to send OTP. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true);
+    setLoginError('');
     
-    if (success) {
-      navigate(from, { replace: true });
-    } else {
-      setLoginError('Invalid email or password');
+    // Mock API call to verify OTP and log in
+    console.log(`Verifying OTP: ${data.otp} for phone: ${data.phone}`);
+    try {
+      // Simulate network request
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      // In a real app, you would make a fetch call here
+      // const response = await fetch('/api/verify-otp-login', { ... });
+      // const result = await response.json();
+      
+      // Assume a successful verification for the mock
+      const success = true; // In a real app, this would come from the API response
+      
+      if (success) {
+        // Since we can't modify the AuthContext, we'll simulate a successful login
+        // A real implementation would call a login function from context
+        alert('Login successful!');
+        navigate(from, { replace: true });
+      } else {
+        setLoginError('Invalid OTP.');
+      }
+    } catch (error) {
+      setLoginError('An error occurred during verification.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -51,94 +94,85 @@ const Login: React.FC = () => {
               </div>
             )}
 
+            {/* Phone Number Input */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                Phone Number
               </label>
               <div className="mt-1 relative">
                 <input
-                  {...register('email', {
-                    required: 'Email is required',
+                  {...register('phone', {
+                    required: 'Phone number is required',
                     pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
+                      value: /^[6-9]\d{9}$/,
+                      message: 'Invalid Indian phone number'
                     }
                   })}
-                  type="email"
+                  type="tel"
                   className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"
-                  placeholder="Enter your email"
+                  placeholder="Enter your phone number"
+                  disabled={otpSent}
                 />
-                <Mail className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                <Phone className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               </div>
-              {errors.email && (
-                <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+              {errors.phone && (
+                <p className="mt-2 text-sm text-red-600">{errors.phone.message}</p>
               )}
             </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
-              </label>
-              <div className="mt-1 relative">
-                <input
-                  {...register('password', {
-                    required: 'Password is required',
-                    minLength: {
-                      value: 6,
-                      message: 'Password must be at least 6 characters'
-                    }
-                  })}
-                  type={showPassword ? 'text' : 'password'}
-                  className="appearance-none block w-full px-3 py-2 pl-10 pr-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"
-                  placeholder="Enter your password"
-                />
-                <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
-                </button>
-              </div>
-              {errors.password && (
-                <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  {...register('rememberMe')}
-                  id="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
+            {/* OTP Input and verification step */}
+            {otpSent ? (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-gray-700">
+                  OTP
                 </label>
+                <div className="mt-1 relative">
+                  <input
+                    {...register('otp', {
+                      required: 'OTP is required',
+                      minLength: {
+                        value: 6,
+                        message: 'OTP must be 6 digits'
+                      },
+                      maxLength: {
+                        value: 6,
+                        message: 'OTP must be 6 digits'
+                      }
+                    })}
+                    type="text"
+                    className="appearance-none block w-full px-3 py-2 pl-10 border border-gray-300 rounded-md placeholder-gray-400 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                    placeholder="Enter the 6-digit OTP"
+                  />
+                  <Lock className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+                </div>
+                {errors.otp && (
+                  <p className="mt-2 text-sm text-red-600">{errors.otp.message}</p>
+                )}
               </div>
+            ) : null}
 
-              <div className="text-sm">
-                <Link to="/forgot-password" className="font-medium text-red-600 hover:text-red-500">
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
+            {/* Action buttons */}
             <div>
-              <Button
-                type="submit"
-                isLoading={isLoading}
-                className="w-full"
-                size="lg"
-              >
-                Sign in
-              </Button>
+              {otpSent ? (
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  className="w-full"
+                  size="lg"
+                >
+                  Verify & Sign In
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  onClick={handleSubmit(handleSendOtp)}
+                  isLoading={isLoading}
+                  className="w-full"
+                  size="lg"
+                >
+                  Send OTP
+                </Button>
+              )}
             </div>
           </form>
 
